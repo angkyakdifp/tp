@@ -3,8 +3,12 @@ package seedu.address.model;
 import java.nio.file.Path;
 import java.util.function.Predicate;
 
+import javafx.beans.value.ChangeListener;
 import javafx.collections.ObservableList;
 import seedu.address.commons.core.GuiSettings;
+import seedu.address.commons.core.ShortcutSettings;
+import seedu.address.logic.commands.CommandWord;
+import seedu.address.logic.commands.ShortcutAlias;
 import seedu.address.model.person.Person;
 
 /**
@@ -34,6 +38,27 @@ public interface Model {
      */
     void setGuiSettings(GuiSettings guiSettings);
 
+    /**
+     * Returns the user prefs' shortcut settings.
+     */
+    ShortcutSettings getShortcutSettings();
+
+    /**
+     * Sets the user prefs' shortcut settings.
+     */
+    void setShortcutSettings(ShortcutSettings shortcutSettings);
+    /**
+     * Registers a new shortcut mapping.
+     */
+    String registerShortcut(ShortcutAlias shortcutAlias, CommandWord commandWord);
+    /**
+     * Removes the shortcut mapping.
+     */
+    String removeShortcut(ShortcutAlias shortcutAlias);
+    /**
+     * Checks if the alias has a mapping registered.
+     */
+    String getShortcut(String alias);
     /**
      * Returns the user prefs' address book file path.
      */
@@ -105,9 +130,19 @@ public interface Model {
      */
     void addCommandString(String commandString);
 
+    /**
+     * Sets the current theme of the application to be {@code theme}
+     */
+    void setTheme(Theme theme);
+
+    /**
+     * Adds @code{changeListener} as an observer to the application theme.
+     */
+    void addThemeListener(ChangeListener<? super Theme> changeListener);
+
     boolean hasHistory();
     boolean canRedo();
-    void undoAddressBook();
-    void redoAddressBook();
-    void commitAddressBook();
+    void undo();
+    void redo();
+    void commit();
 }

@@ -1,5 +1,6 @@
 package seedu.address.logic.parser;
 
+import static seedu.address.logic.Messages.MESSAGE_BLANK_ARGUMENTS;
 import static seedu.address.logic.Messages.MESSAGE_INVALID_COMMAND_FORMAT;
 import static seedu.address.logic.Messages.MESSAGE_INVALID_PERSON_TYPE;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_AGE;
@@ -11,7 +12,6 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_PHONE;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_SPECIALTY;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_TAG;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -58,6 +58,12 @@ public class FindCommandParser implements ParserComplex<FindCommand> {
                     FindCommand.MESSAGE_USAGE_PATIENT));
         }
 
+        if (argMultimap.anyValuesBlank(PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL,
+                PREFIX_TAG, PREFIX_AGE, PREFIX_MEDICALHISTORY)) {
+            throw new ParseException(String.format(MESSAGE_BLANK_ARGUMENTS,
+                    FindCommand.MESSAGE_USAGE_PATIENT));
+        }
+
         argMultimap.verifyNoDuplicatePrefixesFor(PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL,
                 PREFIX_AGE, PREFIX_MEDICALHISTORY);
 
@@ -85,6 +91,12 @@ public class FindCommandParser implements ParserComplex<FindCommand> {
                     FindCommand.MESSAGE_USAGE_SPECIALIST));
         }
 
+        if (argMultimap.anyValuesBlank(PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL, PREFIX_LOCATION,
+                PREFIX_TAG, PREFIX_SPECIALTY)) {
+            throw new ParseException(String.format(MESSAGE_BLANK_ARGUMENTS,
+                    FindCommand.MESSAGE_USAGE_SPECIALIST));
+        }
+
         argMultimap.verifyNoDuplicatePrefixesFor(PREFIX_NAME, PREFIX_PHONE, PREFIX_EMAIL,
                 PREFIX_LOCATION, PREFIX_SPECIALTY);
 
@@ -103,12 +115,10 @@ public class FindCommandParser implements ParserComplex<FindCommand> {
     }
 
     private List<String> splitKeywordsByWhitespace(ArgumentMultimap argMultimap, Prefix prefix) {
-        if (argMultimap.getValue(prefix).isPresent()) {
-            String trimmedArgs = argMultimap.getValue(prefix).get().trim();
-            String[] keywords = trimmedArgs.split("\\s+");
-            return Arrays.asList(keywords);
-        }
-        return new ArrayList<>();
+        assert argMultimap.getValue(prefix).isPresent();
+        String trimmedArgs = argMultimap.getValue(prefix).get().trim();
+        String[] keywords = trimmedArgs.split("\\s+");
+        return Arrays.asList(keywords);
     }
 
     private FindPredicateMap setupPersonPredicates(ArgumentMultimap argMultimap) {

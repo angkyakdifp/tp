@@ -1,7 +1,6 @@
 package seedu.address.logic.commands;
 
 import static java.util.Objects.requireNonNull;
-import static seedu.address.logic.parser.CliSyntax.PATIENT_TAG;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_AGE;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_EMAIL;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_LOCATION;
@@ -10,16 +9,13 @@ import static seedu.address.logic.parser.CliSyntax.PREFIX_NAME;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_PHONE;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_SPECIALTY;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_TAG;
-import static seedu.address.logic.parser.CliSyntax.SPECIALIST_TAG;
 
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
-import seedu.address.commons.core.index.Index;
 import seedu.address.commons.util.CollectionUtil;
 import seedu.address.commons.util.StringUtil;
 import seedu.address.commons.util.ToStringBuilder;
@@ -48,9 +44,9 @@ public class EditCommand extends Command {
     public static final String MESSAGE_NOT_EDITED = "At least one field to edit must be provided.";
     public static final String MESSAGE_DUPLICATE_PERSON = "This person already exists in the address book.";
     private static final String MESSAGE_USAGE_GENERAL = "Parameters: "
-            + PREFIX_NAME + "NAME "
-            + PREFIX_PHONE + "PHONE "
-            + PREFIX_EMAIL + "EMAIL "
+            + "[" + PREFIX_NAME + "NAME] "
+            + "[" + PREFIX_PHONE + "PHONE] "
+            + "[" + PREFIX_EMAIL + "EMAIL] "
             + "[" + PREFIX_TAG + "TAG]... ";
 
     private static final String PERSON_EXAMPLE =
@@ -61,42 +57,32 @@ public class EditCommand extends Command {
                     + PREFIX_TAG + "owesMoney ";
 
     public static final String MESSAGE_USAGE_PATIENT = COMMAND_WORD + " "
-            + PATIENT_TAG
-            + ": Edit a patient in the address book. \n"
+            + ": Edit a patient in the address book.\n"
             + MESSAGE_USAGE_GENERAL
-            + PREFIX_AGE + "AGE "
-            + PREFIX_MEDICALHISTORY + "MEDICAL HISTORY \n"
+            + "[" + PREFIX_AGE + "AGE] "
+            + "[" + PREFIX_MEDICALHISTORY + "MEDICAL HISTORY]... \n"
             + "Example: " + COMMAND_WORD + " "
-            + PATIENT_TAG + " "
             + PERSON_EXAMPLE
-            + PREFIX_TAG + "owesMoney "
             + PREFIX_AGE + "30 "
             + PREFIX_MEDICALHISTORY + "Osteoporosis";
 
     public static final String MESSAGE_USAGE_SPECIALIST = COMMAND_WORD + " "
-            + SPECIALIST_TAG
-            + ": edit a specialist in the address book. \n"
+            + ": Edit a specialist in the address book. \n"
             + MESSAGE_USAGE_GENERAL
-            + PREFIX_LOCATION + "LOCATION "
-            + PREFIX_SPECIALTY + "SPECIALTY \n"
+            + "[" + PREFIX_LOCATION + "LOCATION] "
+            + "[" + PREFIX_SPECIALTY + "SPECIALTY] \n"
             + "Example: " + COMMAND_WORD + " "
-            + SPECIALIST_TAG + " "
             + PERSON_EXAMPLE
             + PREFIX_LOCATION + "311, Clementi Ave 2, #02-25 "
             + PREFIX_SPECIALTY + "Physiotherapist ";
 
-    private final Index index;
     private final EditPersonDescriptor editPersonDescriptor;
 
     /**
-     * @param index                of the person in the filtered person list to edit
      * @param editPersonDescriptor details to edit the person with
      */
-    public EditCommand(Index index, EditPersonDescriptor editPersonDescriptor) {
-        requireNonNull(index);
+    public EditCommand(EditPersonDescriptor editPersonDescriptor) {
         requireNonNull(editPersonDescriptor);
-
-        this.index = index;
         if (editPersonDescriptor instanceof EditPatientDescriptor) {
             this.editPersonDescriptor = new EditPatientDescriptor((EditPatientDescriptor) editPersonDescriptor);
         } else {
@@ -105,21 +91,17 @@ public class EditCommand extends Command {
     }
 
     @Override
-    public CommandResult execute(Model model, CommandHistory commandHistory) throws CommandException {
+    public CommandResult execute(Model model) throws CommandException {
         requireNonNull(model);
-        List<Person> lastShownList = model.getFilteredPersonList();
-
-        if (index.getZeroBased() >= lastShownList.size()) {
-            throw new CommandException(Messages.MESSAGE_INVALID_PERSON_DISPLAYED_INDEX);
-        }
-
-        Person personToEdit = lastShownList.get(index.getZeroBased());
+        Person personToEdit = model.getSelectedPerson();
         Person editedPerson;
+
         if (personToEdit instanceof Patient) {
             if (!(editPersonDescriptor instanceof EditPatientDescriptor)) {
                 throw new CommandException(Messages.MESSAGE_PERSON_TYPE_MISMATCH_INDEX);
             }
-            editedPerson = createEditedPatient((Patient) personToEdit, (EditPatientDescriptor) editPersonDescriptor);
+            editedPerson = createEditedPatient((Patient) personToEdit,
+                    (EditPatientDescriptor) editPersonDescriptor);
         } else {
             if (!(editPersonDescriptor instanceof EditSpecialistDescriptor)) {
                 throw new CommandException(Messages.MESSAGE_PERSON_TYPE_MISMATCH_INDEX);
@@ -133,7 +115,9 @@ public class EditCommand extends Command {
         }
 
         model.setPerson(personToEdit, editedPerson);
-        model.commitAddressBook();
+        model.updateSelectedPerson(editedPerson);
+        model.commit();
+
         return new CommandResult(String.format(MESSAGE_EDIT_PERSON_SUCCESS, Messages.format(editedPerson)));
     }
 
@@ -187,14 +171,12 @@ public class EditCommand extends Command {
         }
 
         EditCommand otherEditCommand = (EditCommand) other;
-        return index.equals(otherEditCommand.index)
-                && editPersonDescriptor.equals(otherEditCommand.editPersonDescriptor);
+        return this.editPersonDescriptor.equals(otherEditCommand.editPersonDescriptor);
     }
 
     @Override
     public String toString() {
         return new ToStringBuilder(this)
-                .add("index", index)
                 .add("editPersonDescriptor", editPersonDescriptor)
                 .toString();
     }
@@ -417,7 +399,7 @@ public class EditCommand extends Command {
          */
         @Override
         public boolean isAnyFieldEdited() {
-            return super.isAnyFieldEdited() || CollectionUtil.isAnyNonNull(specialty);
+            return super.isAnyFieldEdited() || CollectionUtil.isAnyNonNull(location, specialty);
         }
     }
 }

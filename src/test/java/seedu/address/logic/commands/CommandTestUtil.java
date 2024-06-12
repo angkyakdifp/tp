@@ -2,13 +2,16 @@ package seedu.address.logic.commands;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import static seedu.address.logic.parser.CliSyntax.PATIENT_TAG;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_AGE;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_COMMAND_WORD;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_EMAIL;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_LOCATION;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_MEDICALHISTORY;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_NAME;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_PHONE;
+import static seedu.address.logic.parser.CliSyntax.PREFIX_SHORTCUT;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_SPECIALTY;
 import static seedu.address.logic.parser.CliSyntax.PREFIX_TAG;
 import static seedu.address.logic.parser.CliSyntax.SPECIALIST_TAG;
@@ -19,6 +22,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import seedu.address.commons.core.index.Index;
+import seedu.address.logic.LogicManager;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.model.AddressBook;
 import seedu.address.model.Model;
@@ -82,6 +86,17 @@ public class CommandTestUtil {
     public static final EditCommand.EditPatientDescriptor DESC_AMY;
     public static final EditCommand.EditSpecialistDescriptor DESC_BOB;
 
+    public static final ShortcutAlias SHORTCUT_ALIAS_1 = new ShortcutAlias("del");
+    public static final ShortcutAlias SHORTCUT_ALIAS_2 = new ShortcutAlias("li");
+    public static final CommandWord COMMAND_WORD_1 = new CommandWord(DeleteCommand.COMMAND_WORD);
+    public static final CommandWord COMMAND_WORD_2 = new CommandWord(ListCommand.COMMAND_WORD);
+
+    public static final String SHORTCUT_DESC_VALID = " " + PREFIX_SHORTCUT + SHORTCUT_ALIAS_1;
+    public static final String SHORTCUT_DESC_INVALID = " " + PREFIX_SHORTCUT + COMMAND_WORD_1;
+    public static final String COMMANDWORD_DESC_VALID = " " + PREFIX_COMMAND_WORD + COMMAND_WORD_1;
+    public static final String COMMANDWORD_DESC_INVALID = " " + PREFIX_COMMAND_WORD + SHORTCUT_ALIAS_1;
+
+
     static {
         DESC_AMY = (EditCommand.EditPatientDescriptor) new EditPatientDescriptorBuilder()
                 .withMedicalHistory(VALID_MEDICAL_HISTORY_ANEMIA)
@@ -102,9 +117,9 @@ public class CommandTestUtil {
      * - the {@code actualModel} matches {@code expectedModel}
      */
     public static void assertCommandSuccess(Command command, Model actualModel, CommandResult expectedCommandResult,
-            Model expectedModel, CommandHistory commandHistory) {
+            Model expectedModel) {
         try {
-            CommandResult result = command.execute(actualModel, commandHistory);
+            CommandResult result = command.execute(actualModel);
             assertEquals(expectedCommandResult, result);
             assertEquals(expectedModel, actualModel);
         } catch (CommandException ce) {
@@ -113,13 +128,13 @@ public class CommandTestUtil {
     }
 
     /**
-     * Convenience wrapper to {@link #assertCommandSuccess(Command, Model, CommandResult, Model, CommandHistory)}
+     * Convenience wrapper to {@link #assertCommandSuccess(Command, Model, CommandResult, Model)}
      * that takes a string {@code expectedMessage}.
      */
     public static void assertCommandSuccess(Command command, Model actualModel, String expectedMessage,
-            Model expectedModel, CommandHistory commandHistory) {
+            Model expectedModel) {
         CommandResult expectedCommandResult = new CommandResult(expectedMessage);
-        assertCommandSuccess(command, actualModel, expectedCommandResult, expectedModel, commandHistory);
+        assertCommandSuccess(command, actualModel, expectedCommandResult, expectedModel);
     }
 
     /**
@@ -128,14 +143,16 @@ public class CommandTestUtil {
      * - the CommandException message matches {@code expectedMessage} <br>
      * - the address book, filtered person list and selected person in {@code actualModel} remain unchanged
      */
+    @SuppressWarnings("checkstyle:EmptyCatchBlock")
     public static void assertCommandFailure(Command command, Model actualModel,
-                                            String expectedMessage, CommandHistory commandHistory) {
+                                            String expectedMessage) {
         // we are unable to defensively copy the model for comparison later, so we can
         // only do so by copying its components.
         AddressBook expectedAddressBook = new AddressBook(actualModel.getAddressBook());
         List<Person> expectedFilteredList = new ArrayList<>(actualModel.getFilteredPersonList());
 
-        assertThrows(CommandException.class, expectedMessage, () -> command.execute(actualModel, commandHistory));
+        assertThrows(CommandException.class, expectedMessage, () -> command.execute(actualModel));
+        assertThrows(CommandException.class, expectedMessage, () -> command.execute(actualModel));
         assertEquals(expectedAddressBook, actualModel.getAddressBook());
         assertEquals(expectedFilteredList, actualModel.getFilteredPersonList());
     }
@@ -153,4 +170,42 @@ public class CommandTestUtil {
         assertEquals(1, model.getFilteredPersonList().size());
     }
 
+    /**
+     * Executes the given {@code input} from {@code logicManager}, confirms that <br>
+     * actual command result and {@code expectedCommandResult} are equal.
+     * @param logicManager
+     * @param input
+     * @param expectedException
+     */
+    public static void assertExceptionExecutedFromLogicManager(LogicManager logicManager, String input,
+                                                                  Exception expectedException) {
+        CommandResult commandResult;
+        try {
+            commandResult = logicManager.execute(input);
+        } catch (Exception e) {
+            assertEquals(expectedException, e);
+            return;
+        }
+
+        fail("Expected an exception but no exception was thrown. Command result : " + commandResult);
+    }
+
+    /**
+     * Executes the given {@code input} from {@code logicManager}, confirms that <br>
+     * actual command result and {@code expectedCommandResult} are equal.
+     * @param logicManager
+     * @param input
+     * @param expectedCommandResult
+     */
+    public static void assertCommandResultExecutedFromLogicManager(LogicManager logicManager, String input,
+                                                               CommandResult expectedCommandResult) {
+        CommandResult commandResult;
+        try {
+            commandResult = logicManager.execute(input);
+        } catch (Exception e) {
+            fail("Expected CommandResult but exception was thrown : " + e + " : " + e.getMessage());
+            return;
+        }
+        assertEquals(expectedCommandResult, commandResult);
+    }
 }

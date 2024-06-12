@@ -2,12 +2,15 @@ package seedu.address.logic;
 
 import java.nio.file.Path;
 
+import javafx.beans.value.ChangeListener;
 import javafx.collections.ObservableList;
 import seedu.address.commons.core.GuiSettings;
+import seedu.address.commons.core.ShortcutSettings;
 import seedu.address.logic.commands.CommandResult;
 import seedu.address.logic.commands.exceptions.CommandException;
 import seedu.address.logic.parser.exceptions.ParseException;
 import seedu.address.model.ReadOnlyAddressBook;
+import seedu.address.model.Theme;
 import seedu.address.model.person.Person;
 
 /**
@@ -36,6 +39,9 @@ public interface Logic {
     /** Returns a person that is selected*/
     Person getSelectedPerson();
 
+    /** Update the selected person*/
+    void updateSelectedPerson(Person person);
+
     /**
      * Returns the user prefs' address book file path.
      */
@@ -52,6 +58,16 @@ public interface Logic {
     void setGuiSettings(GuiSettings guiSettings);
 
     /**
+     * Returns the user prefs' shortcut settings.
+     */
+    ShortcutSettings getShortcutSettings();
+
+    /**
+     * Sets the user prefs' shortcut settings.
+     */
+    void setShortcutSettings(ShortcutSettings shortcutSettings);
+
+    /**
      * Returns the command string of the next most recent command executed.
      */
     String getPrevCommandString(String currentCommandString);
@@ -64,4 +80,15 @@ public interface Logic {
      * Adds the most recent command string input by the user to the CommandStringStash.
      */
     void addCommandString(String commandString);
+
+    /**
+     * Sets the current theme of the application to be {@code theme}
+     */
+    void setTheme(Theme theme);
+
+    /**
+     * Adds @code{changeListener} as an observer to the application theme.
+     */
+    void addThemeListener(ChangeListener<? super Theme> changeListener);
+
 }
